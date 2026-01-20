@@ -265,7 +265,32 @@
         }
         .output_png {
             text-align: center;
+            max-width: 100%;
+            overflow-x: auto;
         }
+        /* Prevent notebook output images from breaking column layout */
+      .output_png img,
+      .output_subarea img {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+      /* Hard-stop notebook outputs from expanding layout */
+      .output_area,
+      .output_subarea,
+      .output_wrapper,
+      .output {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+      }
+
+      /* Make sure output images never exceed their container */
+      .output_area img,
+      .output_subarea img,
+      .output_png img {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+
         /* Code cell styling */
         .code_cell {
             margin: 1em 0;
@@ -434,7 +459,6 @@ h4, h5{
 table, img{
   margin: 0.8em 0 !important;
 }
-    
     </style>
 </head>
 <body>
@@ -7621,44 +7645,29 @@ Logistic Regression serves as an interpretable baseline optimized for F₂-score
  </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered">
- <div class="inner_cell">
-  <div class="text_cell_render border-box-sizing rendered_html">
-<div class="output_wrapper">
-  <div class="output">
-   <div class="output_area">
-    <div class="prompt">
+  <div class="inner_cell">
+    <div class="text_cell_render border-box-sizing rendered_html">
+
+      <h2 id="Correlation-Structure-of-Delay-Drivers-(Operational,-Weather,-and-Engineered-Signals)">
+        Correlation Structure of Delay Drivers (Operational, Weather, and Engineered Signals)
+      </h2>
+
     </div>
-    <div class="output_markdown rendered_html output_subarea">
-     <h2 id="Correlation-Structure-of-Delay-Drivers-(Operational,-Weather,-and-Engineered-Signals)">
-      Correlation Structure of Delay Drivers (Operational, Weather, and Engineered Signals)
-      <a class="anchor-link" href="#Correlation-Structure-of-Delay-Drivers-(Operational,-Weather,-and-Engineered-Signals)">
-       ¶
-      </a>
-     </h2>
-    </div>
-   
   </div>
- </div>
 </div>
-</div>
-   <div class="output_area">
-    <div class="prompt">
+
+<div class="cell border-box-sizing text_cell rendered">
+  <div class="inner_cell">
+    <div class="text_cell_render border-box-sizing rendered_html">
+      <img src="images/image_014_336d90ad.png" width="950" alt="">
     </div>
-    <div class="output_png output_subarea">
-     <img alt="No description has been provided for this image" src="images/image_014_336d90ad.png" width="950"/>
-    </div>
-   </div>
   </div>
- </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered">
  <div class="prompt input_prompt">
  </div>
  <div class="inner_cell">
   <div class="text_cell_render border-box-sizing rendered_html">
-   <p>
-    %md
-   </p>
    <h3 id="Insights">
     <strong>
      Insights
@@ -7748,9 +7757,6 @@ Logistic Regression serves as an interpretable baseline optimized for F₂-score
      Nonlinear delay dynamics show small disruptions escalate quickly, justifying tighter controls during peak-volume periods.
     </li>
    </ul>
-  </div>
- </div>
-</div>
 <div class="cell border-box-sizing text_cell rendered">
  <div class="inner_cell">
   <div class="text_cell_render border-box-sizing rendered_html">
@@ -7758,18 +7764,10 @@ Logistic Regression serves as an interpretable baseline optimized for F₂-score
   <div class="output">
    <div class="output_area">
     <div class="prompt">
-    </div>
     <div class="output_png output_subarea">
      <img alt="No description has been provided for this image" src="images/image_015_ad09356a.png" width="1100"/>
-    </div>
-   
-  </div>
- </div>
-</div>
-</div>
    <div class="output_area">
     <div class="prompt">
-    </div>
     <div class="output_markdown rendered_html output_subarea">
      <h3 id="Busiest-vs-Most-Delayed-Origin-Airports-%E2%80%94-5-Year-(2015%E2%80%932019)">
       Busiest vs Most Delayed Origin Airports — 5-Year (2015–2019)
