@@ -442,7 +442,7 @@ table, img{
     <aside class="sidebar">
       <div class="sidebar-title">
         MIDS Capstone Project<br>
-        Fall 2024
+        Fall 2025
       </div>
 
       <div class="sidebar-section">
@@ -485,10 +485,15 @@ table, img{
  </div>
  <div class="inner_cell">
   <div class="text_cell_render border-box-sizing rendered_html">
-   <h2 id="1.-Team-4-4-Introduction">
-    1. Introduction
+<h2 id="1-Introduction">
+  1. Introduction
+  <a class="anchor-link" href="#1-Introduction">¶</a>
+</h2>
+
+<p>
+Flight delays often emerge from multiple interacting factors and can escalate quickly once they begin. This project focuses on identifying early delay risk using information available before departure to support better operational decisions.
+</p>
     <a class="anchor-link" href="#1.-Team-4-4-Introduction">
-     ¶
     </a>
    </h2>
   </div>
@@ -499,12 +504,11 @@ table, img{
  </div>
  <div class="inner_cell">
   <div class="text_cell_render border-box-sizing rendered_html">
-   <h3 id="1.1-Team-Members:">
-    1.1 Team Members:
-    <a class="anchor-link" href="#1.1-Team-Members:">
-     ¶
-    </a>
-   </h3>
+<h2 id="1.1-Team-Members">
+  2. Team Members
+  <a class="anchor-link" href="#1.1-Team-Members">¶</a>
+</h2>
+
   </div>
  </div>
 </div>
@@ -595,19 +599,17 @@ table, img{
     </a>
    </h3>
    <p>
-    <strong>
-     Abstract
-    </strong>
-   </p>
-   <p>
-    Flight delays impose significant operational costs and customer dissatisfaction across the aviation industry. We are a data science startup tasked by an airline consortium to predict flight delays 2 hours before scheduled departure, enabling proactive management of crew scheduling, gate assignments, and passenger notifications. This project aims to predict whether a domestic U.S. flight will experience a departure delay of 15 minutes or more using information available at the 2-hour cutoff. Our hypothesis is that flight delays can be predicted using a combination of temporal patterns, weather conditions, airport congestion metrics, carrier performance history, network centrality, and time-series features available before departure. In Phase 1, we used the 3 Month OTPW (On-Time Performance and Weather) dataset, which combines flight data from the U.S. Department of Transportation's Bureau of Transportation Statistics with weather observations from the National Oceanic and Atmospheric Administration. Our Phase 2 analysis used the complete 2015 calendar year containing 5.7 million flights processed through a custom join and five-stage checkpoint pipeline that eliminates data leakage and achieves 0% missing data. Our Phase 3 analysis uses the complete 2015-2019 dataset containing 31.1 million flights processed through a six-stage pipeline that eliminates most data leakage, custom joins the data, and achieves near-zero missing data. The dataset exhibits an 82:18 class imbalance with 82% on-time flights. Our feature engineering and selection pipeline produced 112 optimized features across 8 families: Rolling Aggregates (18), Temporal Features (24), Weather Features (15), Network/Graph Features (8), RFM Features (12), Interaction Terms (16), Meta-Features (4), and Binary Indicators (22), all strictly using information available at least 2 hours before scheduled departure.
-   </p>
-   <p>
-    We selected Logistic Regression as our interpretable baseline, which provides fast training on distributed infrastructure, well-calibrated probability outputs for threshold tuning, and serves as an industry-standard benchmark. To address the 82:18 class imbalance, we applied undersampling to the training set while preserving natural class distributions in validation (2018) and test (2019) sets. We optimized for F₂-score, which weights recall higher than precision to prioritize catching risky flights—aligning with airline operational priorities. The baseline Logistic Regression with non-engineered features achieved AUC-PR of 0.515 on the 2019 blind holdout. Feature engineering substantially improved performance, with Logistic Regression on engineered features achieving F₂ of 0.595, precision of 45.4%, and recall of 64.5%. Random Forest (Phase 3) reached F₂ of 0.610 with precision of 64.8% and recall of 60.1%, while identifying the top predictive features: 24-hour weighted rolling average delay by origin airport (14.2% importance), Random Forest probability meta-feature (11.8%), previous flight delay status (9.5%), origin degree centrality (8.7%), and prior-day delay rate (7.6%). The best-performing model was MLP 40:60 with optimized two-layer architecture, achieving F₂ of 0.662, precision of 36.7%, and recall of 82.9%, demonstrating superior ability to identify at-risk flights for operational intervention. For delay duration prediction, our two-tier regression model achieved RMSE of 42.83 minutes on the 2019 holdout, providing actionable minute-level estimates for operational planning. The diversity across our top 15 features—spanning rolling aggregates, meta-features, aircraft lag variables, and network centrality—validates that delays are complex phenomena requiring multiple analytical perspectives.
-   </p>
-   <p>
-    Phase 3 accomplishments include: scaling the pipeline 6x from 5M to 31M flights while maintaining data quality, engineering 112 leakage-free features validated against the T-2 hour cutoff, implementing and comparing four modeling approaches (Logistic Regression baseline, Random Forest classification, MLP neural networks, and two-tier regression), establishing rigorous train-validation-holdout splits (2015-2017 train, 2018 validation, 2019 blind test), and achieving production-ready data quality with less than a percent of missing values. Next steps for deployment include: implementing real-time feature computation infrastructure, developing data drift monitoring for model degradation detection, creating carrier-specific threshold calibration for heterogeneous operational needs, and validating pipeline performance on 2020-2021 data to assess COVID-19 impact and model robustness to unprecedented disruptions.
-   </p>
+<p>
+Flight delays rarely occur in isolation, yet they place real strain on airline operations and passenger experience. This project develops a system to estimate whether a domestic U.S. flight is at risk of departing at least 15 minutes late using only information available two hours before scheduled departure. The goal is earlier awareness, giving operations teams time to adjust crew schedules, gate plans, and communication before disruptions compound.
+</p>
+
+<p>
+The model integrates U.S. Department of Transportation on-time performance data with National Oceanic and Atmospheric Administration weather observations, covering 31.1 million domestic flights from 2015–2019. A custom data pipeline enforces a strict two-hour cutoff to prevent data leakage and maintains near-zero missing values at scale. Feature engineering produces 112 leakage-free features capturing temporal patterns, recent delay behavior, weather conditions, airport congestion, carrier performance history, and network centrality, all derived exclusively from pre-departure information.
+</p>
+
+<p>
+Logistic Regression serves as an interpretable baseline optimized for F₂-score to prioritize recall and surface high-risk flights early. Comparisons across Logistic Regression, Random Forest, and multilayer perceptron models show that neural networks achieve the strongest recall for early delay detection, while a two-tier regression model estimates delay duration with an RMSE of 42.83 minutes. Together, these results show that early delay risk estimation is most effective when historical performance, network structure, and short-horizon temporal signals are combined within a carefully leakage-controlled pipeline built for operational use.
+</p>
    <hr/>
   </div>
  </div>
