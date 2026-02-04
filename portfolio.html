@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flight Sentry — Flight Delay Risk Modeling (Portfolio)</title>
+    <meta
+      name="description"
+      content="Portfolio summary of Flight Sentry: an early-warning system that predicts flight departure delays (≥15 min) using only pre-departure signals (T-2h), built and evaluated on 31.1M U.S. flights (2015–2019)."
+    />
+    <style>
+      :root {
+        --bg: #0b1220;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel-2: rgba(255, 255, 255, 0.09);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.72);
+        --faint: rgba(255, 255, 255, 0.55);
+        --border: rgba(255, 255, 255, 0.14);
+        --accent: #7dd3fc;
+        --accent-2: #a78bfa;
+        --good: #34d399;
+        --warn: #fbbf24;
+        --bad: #fb7185;
+        --maxw: 1100px;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+        line-height: 1.6;
+        color: var(--text);
+        background: radial-gradient(1200px 800px at 10% 10%, rgba(125, 211, 252, 0.18), transparent 60%),
+          radial-gradient(1000px 700px at 90% 20%, rgba(167, 139, 250, 0.16), transparent 55%),
+          radial-gradient(1000px 700px at 70% 90%, rgba(52, 211, 153, 0.12), transparent 55%),
+          var(--bg);
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        font-size: 0.95em;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 0.12em 0.35em;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 0.5rem;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .container {
+        width: min(var(--maxw), calc(100% - 2rem));
+        margin: 0 auto;
+      }
+
+      header.hero {
+        padding: 3.25rem 0 1.5rem;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 0.7fr;
+        gap: 1.25rem;
+        align-items: start;
+      }
+
+      @media (max-width: 900px) {
+        .hero-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .badge {
+        display: inline-flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.35rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .hero h1 {
+        margin: 0.75rem 0 0.5rem;
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 1.05rem;
+        margin: 0 0 1rem;
+      }
+
+      .panel {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        box-shadow: var(--shadow);
+      }
+
+      .panel .panel-inner {
+        padding: 1.1rem 1.1rem;
+      }
+
+      .quick-facts {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .fact {
+        display: grid;
+        gap: 0.15rem;
+        padding: 0.85rem 0.9rem;
+        border-radius: 0.85rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .fact .k {
+        color: var(--faint);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .fact .v {
+        font-weight: 650;
+        font-size: 1.05rem;
+      }
+
+      .fact .s {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      nav.toc {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(10px);
+        background: rgba(11, 18, 32, 0.72);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .toc-inner {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        padding: 0.75rem 0;
+        align-items: center;
+      }
+
+      .toc a {
+        display: inline-flex;
+        padding: 0.4rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 0.92rem;
+      }
+
+      .toc a:hover {
+        text-decoration: none;
+        border-color: rgba(125, 211, 252, 0.35);
+      }
+
+      main {
+        padding: 1.25rem 0 4rem;
+      }
+
+      section {
+        margin: 1.4rem 0;
+      }
+
+      h2 {
+        font-size: 1.45rem;
+        margin: 0 0 0.75rem;
+        letter-spacing: -0.01em;
+      }
+
+      h3 {
+        font-size: 1.15rem;
+        margin: 1rem 0 0.5rem;
+      }
+
+      p {
+        margin: 0.65rem 0;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      @media (max-width: 900px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      ul {
+        margin: 0.55rem 0 0.2rem 1.2rem;
+        padding: 0;
+      }
+
+      li {
+        margin: 0.35rem 0;
+        color: rgba(255, 255, 255, 0.88);
+      }
+
+      figure {
+        margin: 0.9rem 0;
+        padding: 0.85rem 0.85rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      figcaption {
+        margin-top: 0.6rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .callout {
+        padding: 0.9rem 0.95rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(125, 211, 252, 0.25);
+        background: rgba(125, 211, 252, 0.08);
+      }
+
+      .callout strong {
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 820px;
+      }
+
+      th,
+      td {
+        padding: 0.7rem 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        vertical-align: top;
+      }
+
+      th {
+        text-align: left;
+        color: rgba(255, 255, 255, 0.88);
+        background: rgba(255, 255, 255, 0.06);
+        position: sticky;
+        top: 0;
+      }
+
+      td {
+        color: rgba(255, 255, 255, 0.86);
+      }
+
+      .pill {
+        display: inline-flex;
+        padding: 0.14rem 0.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin: 0.85rem 0 1rem;
+      }
+
+      .pill.skill {
+        border-color: rgba(125, 211, 252, 0.25);
+        background: rgba(125, 211, 252, 0.08);
+      }
+
+      details {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 1rem;
+        padding: 0.75rem 0.9rem;
+      }
+
+      details summary {
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 650;
+      }
+
+      details[open] summary {
+        margin-bottom: 0.65rem;
+      }
+
+      footer {
+        padding: 2.5rem 0 3.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="container hero-grid">
+        <div class="hero">
+          <span class="badge">Portfolio summary • ML + data engineering • time-aware validation</span>
+          <h1>Flight Sentry</h1>
+          <p class="subtitle">
+            Early-warning model for <strong>flight departure delays</strong> (≥ 15 minutes), using only signals available
+            <strong>2 hours before scheduled departure (T-2h)</strong>.
+          </p>
+          <div class="chips" aria-label="Tech stack and skills demonstrated">
+            <span class="pill skill">PySpark</span>
+            <span class="pill skill">Spark SQL</span>
+            <span class="pill skill">Leakage prevention</span>
+            <span class="pill skill">Time-series split/CV</span>
+            <span class="pill skill">Feature engineering</span>
+            <span class="pill skill">XGBoost</span>
+            <span class="pill skill">Optuna</span>
+            <span class="pill skill">PyTorch</span>
+            <span class="pill skill">AUC‑PR</span>
+            <span class="pill skill">F2 optimization</span>
+          </div>
+          <div class="callout">
+            <p>
+              <strong>What this demonstrates:</strong> leakage-safe feature engineering at large scale (31.1M rows),
+              time-aware evaluation, and comparing multiple modeling strategies (classification vs regression-to-binary)
+              with metrics aligned to operational decision-making.
+            </p>
+            <p class="muted">
+              Want the full technical report export? Open <a href="index.html">index.html</a>.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-inner quick-facts">
+            <div class="fact">
+              <div class="k">Dataset</div>
+              <div class="v">31.1M U.S. domestic flights</div>
+              <div class="s">2015–2019 • DOT on-time + NOAA weather</div>
+            </div>
+            <div class="fact">
+              <div class="k">Prediction</div>
+              <div class="v">DEP_DEL15 (≥ 15 min late)</div>
+              <div class="s">Features strictly cut off at T-2h</div>
+            </div>
+            <div class="fact">
+              <div class="k">Best headline result</div>
+              <div class="v"><span class="pill">F2 ≈ 0.697</span> <span class="pill">AUC‑PR ≈ 0.723</span></div>
+              <div class="s">XGBoost ensemble (regression → threshold)</div>
+            </div>
+            <div class="fact">
+              <div class="k">Stack (high-level)</div>
+              <div class="v">Spark / PySpark • XGBoost • PyTorch</div>
+              <div class="s">Optuna tuning • Parquet checkpoints</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <nav class="toc">
+      <div class="container toc-inner">
+        <a href="#problem">Problem</a>
+        <a href="#data">Data + Leakage Control</a>
+        <a href="#features">Features</a>
+        <a href="#modeling">Modeling</a>
+        <a href="#results">Results</a>
+        <a href="#engineering">Engineering</a>
+        <a href="#next">Next Steps</a>
+        <a href="#credits">Credits</a>
+      </div>
+    </nav>
+
+    <main>
+      <div class="container">
+        <section id="problem" class="panel">
+          <div class="panel-inner">
+            <h2>Problem (and why it matters)</h2>
+            <p>
+              Flight delays often emerge from multiple interacting factors and can cascade once they begin. The goal of
+              Flight Sentry is to provide an <strong>early risk signal</strong> while there is still time to act (crew,
+              gate, and passenger communications).
+            </p>
+            <div class="grid-2">
+              <div>
+                <h3>Prediction target</h3>
+                <p class="muted">
+                  We predict <code>DEP_DEL15</code>: whether a flight departs at least 15 minutes late (a common DOT
+                  operational threshold).
+                </p>
+              </div>
+              <div>
+                <h3>Metric choice</h3>
+                <p class="muted">
+                  We prioritize <strong>F2 score</strong> (recall-weighted) and <strong>AUC‑PR</strong> because the data
+                  is imbalanced (~82:18 on-time vs delayed) and missing a delay can be operationally costlier than a
+                  false alarm.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="data" class="panel">
+          <div class="panel-inner">
+            <h2>Data + leakage control (T-2h realism)</h2>
+            <p>
+              A central requirement is realism: every feature must be computable using information available
+              <strong>2 hours before scheduled departure</strong>. This avoids “look-ahead” bias and better matches how
+              an operations team would use the model.
+            </p>
+
+            <div class="grid-2">
+              <div>
+                <h3>Primary data sources</h3>
+                <ul>
+                  <li><strong>DOT BTS On-Time Performance</strong>: schedules, outcomes, and delay labels</li>
+                  <li><strong>NOAA Integrated Surface Database</strong>: hourly weather observations</li>
+                  <li><strong>Airport + station metadata</strong>: identifiers, coordinates, timezone alignment</li>
+                </ul>
+                <p class="muted">
+                  The pipeline processes 2015–2019 at full scale (31.1M flights) and enforces temporal ordering at every
+                  stage.
+                </p>
+              </div>
+              <div>
+                <h3>Leakage prevention (concrete examples)</h3>
+                <ul>
+                  <li>Exclude post-departure timestamps and outcome-derived fields.</li>
+                  <li>Align weather “as-of” T-2h rather than using observations after departure.</li>
+                  <li>Compute rolling aggregates only from prior history.</li>
+                </ul>
+              </div>
+            </div>
+
+            <figure>
+              <img src="images/image_000_414ab24b.png" alt="Pipeline diagram showing staged data processing with checkpoints." />
+              <figcaption>
+                Checkpointed, multi-stage data pipeline (Spark) used to convert raw flight + weather data into a
+                modeling-ready dataset at 31M-row scale.
+              </figcaption>
+            </figure>
+
+            <div class="grid-2">
+              <figure>
+                <img src="images/image_005_2fdd6b8a.png" alt="Diagram illustrating as-of join logic for aligning weather observations to flights at a fixed cutoff time." />
+                <figcaption>
+                  “As-of” join concept: weather is aligned to the flight at a strict pre-departure cutoff (T-2h).
+                </figcaption>
+              </figure>
+              <figure>
+                <img src="images/image_007_f720915e.png" alt="Visualization summarizing feature leakage prevention strategy across join and feature engineering stages." />
+                <figcaption>Leakage prevention strategy applied across joins and feature engineering.</figcaption>
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <section id="features" class="panel">
+          <div class="panel-inner">
+            <h2>Feature engineering (what signals matter)</h2>
+            <p>
+              The final dataset contains <strong>112 leakage-free features</strong> built from only pre-departure data.
+              The design goal was to capture multiple delay mechanisms: short-horizon operational buildup, airport-level
+              congestion, network propagation, and weather impact.
+            </p>
+
+            <div class="grid-2">
+              <div>
+                <h3>Feature families (examples)</h3>
+                <ul>
+                  <li><strong>Temporal</strong>: hour/day/seasonality encodings</li>
+                  <li><strong>Rolling delay history</strong>: origin 24h weighted delay averages</li>
+                  <li><strong>Aircraft rotation</strong>: prior-leg delay signals (when available pre-departure)</li>
+                  <li><strong>Weather</strong>: severity proxies derived from hourly observations</li>
+                  <li><strong>Network (graph)</strong>: airport centrality features (degree/PageRank-style signals)</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Interpretability takeaway</h3>
+                <p class="muted">
+                  Feature importance analyses highlighted that delay risk is multi-causal: rolling origin delay rates,
+                  “previous flight” status, and network centrality all contributed meaningfully—supporting the idea that
+                  delays propagate through operational networks rather than occurring independently.
+                </p>
+                <p class="muted">
+                  Example top drivers reported in the full report include a 24h rolling average delay by origin and
+                  prior-flight delay indicators.
+                </p>
+              </div>
+            </div>
+
+            <figure>
+              <img src="images/image_010_75934f75.png" alt="Plot showing distribution of the departure delay target and class imbalance." />
+              <figcaption>Class imbalance for DEP_DEL15 (on-time vs delayed), motivating AUC‑PR and recall-aware tuning.</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section id="modeling" class="panel">
+          <div class="panel-inner">
+            <h2>Modeling strategy (and time-aware validation)</h2>
+            <p>
+              We evaluated two complementary approaches: <strong>direct classification</strong> and
+              <strong>regression-to-classification</strong> (predict minutes late, then threshold at 15 minutes).
+            </p>
+
+            <div class="grid-2">
+              <div>
+                <h3>Direct classifiers</h3>
+                <ul>
+                  <li><strong>Logistic Regression</strong> baseline for interpretability</li>
+                  <li><strong>Tree-based</strong> models (RF/GBT) for non-linear interactions</li>
+                  <li><strong>Neural</strong> models (MLP and 1D CNN) for higher recall</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Regression → threshold</h3>
+                <ul>
+                  <li><strong>XGBoost regression ensemble</strong> tuned for delay magnitude</li>
+                  <li>Convert to binary via the 15-minute threshold for apples-to-apples comparison</li>
+                  <li>Best overall F2/AUC‑PR in the experiment summary</li>
+                </ul>
+              </div>
+            </div>
+
+            <details>
+              <summary>How time-aware validation was handled</summary>
+              <p class="muted">
+                Time ordering is preserved via time-based splits (train on earlier periods, evaluate on later periods).
+                Cross-validation is performed in a rolling-window style to better approximate forecasting conditions and
+                avoid leakage from future months/years.
+              </p>
+            </details>
+          </div>
+        </section>
+
+        <section id="results" class="panel">
+          <div class="panel-inner">
+            <h2>Results (headline)</h2>
+            <p>
+              The strongest overall approach in the project summary is the <strong>XGBoost regression ensemble</strong>
+              converted to a binary prediction using the 15-minute threshold.
+            </p>
+
+            <div class="table-wrap">
+              <table aria-label="Model results summary">
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>Approach</th>
+                    <th>Notes</th>
+                    <th style="text-align: right">F2</th>
+                    <th style="text-align: right">Recall</th>
+                    <th style="text-align: right">AUC‑PR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>XGBoost Ensemble (Max)</strong></td>
+                    <td>Regression → threshold</td>
+                    <td>Best overall F2/AUC‑PR in summary</td>
+                    <td style="text-align: right">0.697</td>
+                    <td style="text-align: right">0.725</td>
+                    <td style="text-align: right">0.723</td>
+                  </tr>
+                  <tr>
+                    <td><strong>CNN (PyTorch)</strong> — full-scale</td>
+                    <td>Classification</td>
+                    <td>Best recall in summary; higher compute cost</td>
+                    <td style="text-align: right">0.680</td>
+                    <td style="text-align: right">0.843</td>
+                    <td style="text-align: right">0.664</td>
+                  </tr>
+                  <tr>
+                    <td>GBT</td>
+                    <td>Classification</td>
+                    <td>Strong AUC‑PR among classical models</td>
+                    <td style="text-align: right">0.625</td>
+                    <td style="text-align: right">0.621</td>
+                    <td style="text-align: right">0.719</td>
+                  </tr>
+                  <tr>
+                    <td>MLP (40:60 undersampling)</td>
+                    <td>Classification</td>
+                    <td>High recall with simpler architecture</td>
+                    <td style="text-align: right">0.662</td>
+                    <td style="text-align: right">0.829</td>
+                    <td style="text-align: right">0.599</td>
+                  </tr>
+                  <tr>
+                    <td>Logistic Regression + engineered features</td>
+                    <td>Classification</td>
+                    <td>Interpretable baseline</td>
+                    <td style="text-align: right">0.595</td>
+                    <td style="text-align: right">0.645</td>
+                    <td style="text-align: right">0.566</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p class="muted">
+              Note: training time depends on hardware and cluster configuration; metric values above are from the
+              project’s consolidated summary table in <a href="index.html#5.7-Summary-of-all-ML-Experiments">index.html</a>.
+            </p>
+
+            <details>
+              <summary>Show full experiment summary table (all rows)</summary>
+              <div class="table-wrap" style="margin-top: 0.75rem">
+                <table aria-label="Full modeling experiment summary">
+                  <thead>
+                    <tr>
+                      <th>Model</th>
+                      <th>Approach</th>
+                      <th>Strategy / Notes</th>
+                      <th style="text-align: right">Train time (s)</th>
+                      <th style="text-align: right">F2_test</th>
+                      <th style="text-align: right">Recall_test</th>
+                      <th style="text-align: right">AUC_PR</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>MLP 40:60</td>
+                      <td>Neural network classification</td>
+                      <td>MLP with 40:60 undersampling</td>
+                      <td style="text-align: right">1050.73</td>
+                      <td style="text-align: right">0.6620</td>
+                      <td style="text-align: right">0.8287</td>
+                      <td style="text-align: right">0.5990</td>
+                    </tr>
+                    <tr>
+                      <td>MLP 50:50</td>
+                      <td>Neural network classification</td>
+                      <td>MLP with 50:50 undersampling</td>
+                      <td style="text-align: right">1345.19</td>
+                      <td style="text-align: right">0.6582</td>
+                      <td style="text-align: right">0.8208</td>
+                      <td style="text-align: right">0.6017</td>
+                    </tr>
+                    <tr>
+                      <td>3-model Ensemble</td>
+                      <td>Neural network ensemble</td>
+                      <td>Average of 50:50, 40:60, class-weighted MLPs</td>
+                      <td style="text-align: right">4736.61</td>
+                      <td style="text-align: right">0.6477</td>
+                      <td style="text-align: right">0.7721</td>
+                      <td style="text-align: right">0.5831</td>
+                    </tr>
+                    <tr>
+                      <td>CNN (PyTorch) — Model B (full-scale)</td>
+                      <td>Neural network classification</td>
+                      <td>
+                        1D CNN + MDS streaming &amp; sharding; trained on 50:50 undersampled train; evaluated on full 2019
+                        test; F2-optimal threshold=0.17
+                      </td>
+                      <td style="text-align: right">9516</td>
+                      <td style="text-align: right">0.6802</td>
+                      <td style="text-align: right">0.8428</td>
+                      <td style="text-align: right">0.6639</td>
+                    </tr>
+                    <tr>
+                      <td>CNN (PyTorch) — Model A (subset)</td>
+                      <td>Neural network classification</td>
+                      <td>1D CNN + MDS streaming; 0.5% subset for architecture validation; F2-optimal threshold=0.31</td>
+                      <td style="text-align: right">2880</td>
+                      <td style="text-align: right">0.6630</td>
+                      <td style="text-align: right">0.6516</td>
+                      <td style="text-align: right">0.6525</td>
+                    </tr>
+                    <tr>
+                      <td>GBT</td>
+                      <td>Tree-based</td>
+                      <td>Gradient-Boosted Trees, tuned config</td>
+                      <td style="text-align: right">1232</td>
+                      <td style="text-align: right">0.6245</td>
+                      <td style="text-align: right">0.6206</td>
+                      <td style="text-align: right">0.7191</td>
+                    </tr>
+                    <tr>
+                      <td>RF (Phase 3)</td>
+                      <td>Tree-based</td>
+                      <td>Random Forest, depth=15, 20 trees</td>
+                      <td style="text-align: right">679</td>
+                      <td style="text-align: right">0.6100</td>
+                      <td style="text-align: right">0.6013</td>
+                      <td style="text-align: right">0.6639</td>
+                    </tr>
+                    <tr>
+                      <td>LR + features</td>
+                      <td>Linear model</td>
+                      <td>Logistic regression, engineered features</td>
+                      <td style="text-align: right">161</td>
+                      <td style="text-align: right">0.5950</td>
+                      <td style="text-align: right">0.6450</td>
+                      <td style="text-align: right">0.5662</td>
+                    </tr>
+                    <tr>
+                      <td>RF (Phase 2)</td>
+                      <td>Tree-based</td>
+                      <td>Random Forest, engineered features</td>
+                      <td style="text-align: right">211</td>
+                      <td style="text-align: right">0.4046</td>
+                      <td style="text-align: right">0.3611</td>
+                      <td style="text-align: right">0.6244</td>
+                    </tr>
+                    <tr>
+                      <td>MLP (class weights)</td>
+                      <td>Neural network classification</td>
+                      <td>MLP with class weights</td>
+                      <td style="text-align: right">2340.69</td>
+                      <td style="text-align: right">0.1545</td>
+                      <td style="text-align: right">0.1387</td>
+                      <td style="text-align: right">0.2347</td>
+                    </tr>
+                    <tr>
+                      <td>Baseline LR</td>
+                      <td>Linear model</td>
+                      <td>Logistic regression, non-engineered features</td>
+                      <td style="text-align: right">329</td>
+                      <td style="text-align: right">—</td>
+                      <td style="text-align: right">—</td>
+                      <td style="text-align: right">0.5149</td>
+                    </tr>
+                    <tr>
+                      <td><strong>XGBoost Ensemble (Max)</strong></td>
+                      <td>Regression → threshold</td>
+                      <td>Two-regressor ensemble (weighted/unweighted) with Max strategy</td>
+                      <td style="text-align: right">1619</td>
+                      <td style="text-align: right">0.6970</td>
+                      <td style="text-align: right">0.7245</td>
+                      <td style="text-align: right">0.7225</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <figure>
+              <img src="images/image_028_9da83059.png" alt="Confusion matrix and error profile visualization for a classification model." />
+              <figcaption>
+                Example error profile from the modeling section (confusion matrix + distribution of mistakes). In the
+                full report, these views are used to understand operational tradeoffs at different thresholds.
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section id="engineering" class="panel">
+          <div class="panel-inner">
+            <h2>Engineering highlights (what made this production-like)</h2>
+            <ul>
+              <li><strong>Checkpointed pipeline</strong> to support reproducibility, debugging, and iterative scaling.</li>
+              <li><strong>Leakage-safe joins</strong> and strict time ordering enforced end-to-end (T-2h cutoff).</li>
+              <li><strong>Large-scale feature computation</strong> (rolling aggregates, joins, graph signals) on 31M rows in Spark.</li>
+              <li><strong>Model comparison discipline</strong>: consistent time-based evaluation and metric-driven threshold selection.</li>
+            </ul>
+            <p class="muted">
+              The full report includes additional details on storage (Parquet), performance considerations (caching /
+              persistence strategy), and cluster benchmarking.
+            </p>
+          </div>
+        </section>
+
+        <section id="next" class="panel">
+          <div class="panel-inner">
+            <h2>Next steps (if productizing)</h2>
+            <ul>
+              <li><strong>Real-time feature computation</strong>: reliable T-2h weather + operational signals ingestion.</li>
+              <li><strong>Monitoring</strong>: drift detection, performance degradation, and retraining triggers.</li>
+              <li><strong>Threshold calibration</strong>: tailor decision thresholds by airport/carrier context.</li>
+              <li><strong>Robustness checks</strong>: evaluate on later years / regime shifts (e.g., post-2019 dynamics).</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="credits" class="panel">
+          <div class="panel-inner">
+            <h2>Credits</h2>
+            <p class="muted">
+              Team project (Fall 2025). Update this section to reflect your personal contribution and link to code /
+              slides as appropriate.
+            </p>
+            <div class="grid-2">
+              <div>
+                <h3>Team</h3>
+                <ul>
+                  <li>Anabel Basualdo</li>
+                  <li>Carlos Schrupp</li>
+                  <li>Arun Agarwal</li>
+                  <li>Shikha Sharma</li>
+                  <li>Nicole Zhang</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Your role (edit)</h3>
+                <ul>
+                  <li>Replace with 3–6 bullets describing what <em>you</em> owned (data pipeline, modeling, evaluation, etc.).</li>
+                  <li>Add links: GitHub repo, slides, write-up, notebook, or demo video.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>
+          Files in this repo:
+          <a href="portfolio.html">portfolio.html</a> • <a href="index.html">index.html</a> • <a href="context.md">context.md</a>
+        </p>
+        <p class="muted">Tip: host the folder on GitHub Pages / Netlify for a shareable link.</p>
+      </div>
+    </footer>
+  </body>
+</html>

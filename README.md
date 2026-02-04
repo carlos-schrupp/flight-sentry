@@ -6,7 +6,9 @@ Static website version of the Flight Sentry project notebook for team collaborat
 
 ```
 .
-├── index.html          # Main HTML file (portfolio website)
+├── portfolio.html     # Recruiter-friendly portfolio narrative (recommended entry point)
+├── index.html         # Full technical report export (Databricks notebook → HTML)
+├── context.md         # Translation notes (index.html → portfolio.html)
 ├── images/            # Extracted images (34 files)
 └── README.md          # This file
 ```
@@ -15,16 +17,16 @@ Static website version of the Flight Sentry project notebook for team collaborat
 
 ### Viewing Locally
 
-Simply open `index.html` in any web browser:
+Open `portfolio.html` (recommended) or `index.html` (full report) in any web browser:
 
 ```bash
 # On Linux/Mac
-open index.html
+open portfolio.html
 # or
-xdg-open index.html
+xdg-open portfolio.html
 
 # On Windows
-start index.html
+start portfolio.html
 ```
 
 ## Team Collaboration
