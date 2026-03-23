@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flight Sentry — Explicación Simple (Público)</title>
+    <meta
+      name="description"
+      content="Resumen en español, no técnico, de Flight Sentry: un proyecto que estima el riesgo de retraso de un vuelo dos horas antes de la salida usando patrones de datos históricos de vuelos y clima."
+    />
+    <style>
+      :root {
+        --bg: #0b1220;
+        --panel: rgba(255, 255, 255, 0.06);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.72);
+        --faint: rgba(255, 255, 255, 0.55);
+        --border: rgba(255, 255, 255, 0.14);
+        --accent: #7dd3fc;
+        --accent2: #a78bfa;
+        --good: #34d399;
+        --warn: #fbbf24;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        --maxw: 1000px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        line-height: 1.65;
+        color: var(--text);
+        background: radial-gradient(1200px 800px at 10% 10%, rgba(125, 211, 252, 0.18), transparent 60%),
+          radial-gradient(1000px 700px at 90% 20%, rgba(167, 139, 250, 0.16), transparent 55%),
+          radial-gradient(1000px 700px at 70% 90%, rgba(52, 211, 153, 0.12), transparent 55%), var(--bg);
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .container {
+        width: min(var(--maxw), calc(100% - 2rem));
+        margin: 0 auto;
+      }
+
+      .panel {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        box-shadow: var(--shadow);
+      }
+
+      header {
+        padding: 3rem 0 1.25rem;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.3fr 0.7fr;
+        gap: 1.25rem;
+        align-items: start;
+      }
+
+      @media (max-width: 900px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .badge {
+        display: inline-flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.35rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      h1 {
+        margin: 0.75rem 0 0.5rem;
+        font-size: clamp(2rem, 4vw, 2.8rem);
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+
+      h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1.4rem;
+        letter-spacing: -0.01em;
+      }
+
+      h3 {
+        margin: 1rem 0 0.4rem;
+        font-size: 1.1rem;
+      }
+
+      p {
+        margin: 0.65rem 0;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .panel-inner {
+        padding: 1.1rem 1.15rem;
+      }
+
+      .facts {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .fact {
+        padding: 0.85rem 0.9rem;
+        border-radius: 0.9rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .fact .k {
+        color: var(--faint);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .fact .v {
+        margin-top: 0.15rem;
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+
+      .fact .s {
+        margin-top: 0.15rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .callout {
+        padding: 0.9rem 0.95rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(125, 211, 252, 0.25);
+        background: rgba(125, 211, 252, 0.08);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      @media (max-width: 900px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      ul {
+        margin: 0.55rem 0 0.15rem 1.15rem;
+        padding: 0;
+      }
+
+      li {
+        margin: 0.35rem 0;
+        color: rgba(255, 255, 255, 0.88);
+      }
+
+      figure {
+        margin: 0.9rem 0;
+        padding: 0.85rem 0.85rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      figcaption {
+        margin-top: 0.6rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      footer {
+        padding: 2.5rem 0 3.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--muted);
+      }
+
+      .top-links {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-top: 0.75rem;
+      }
+
+      .top-links a {
+        display: inline-flex;
+        padding: 0.35rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 0.92rem;
+      }
+
+      .top-links a:hover {
+        text-decoration: none;
+        border-color: rgba(125, 211, 252, 0.35);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container hero">
+        <div>
+          <span class="badge">Resumen para público general • No requiere conocimientos técnicos</span>
+          <h1>Flight Sentry</h1>
+          <p class="muted" style="font-size: 1.05rem; margin: 0.25rem 0 0.8rem">
+            Un proyecto que estima la probabilidad de que un vuelo salga con retraso, usando información que habría
+            estado disponible <strong>dos horas antes del despegue</strong>.
+          </p>
+
+          <div class="callout">
+            <p style="margin: 0">
+              <strong>En una frase:</strong> Flight Sentry usa patrones de vuelos pasados y del clima para dar una señal
+              temprana de “riesgo de retraso”, de modo que se pueda planificar antes de que el problema se agrave.
+            </p>
+            <div class="top-links" aria-label="Versiones relacionadas">
+              <a href="public.html" title="English version">Read in English</a>
+              <a href="portfolio.html" title="Resumen técnico/para reclutadores">Versión técnica (reclutadores)</a>
+              <a href="index.html" title="Informe completo">Informe completo</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-inner facts">
+            <div class="fact">
+              <div class="k">Qué predice</div>
+              <div class="v">“¿Este vuelo saldrá 15+ minutos tarde?”</div>
+              <div class="s">Una definición común de retraso en salida.</div>
+            </div>
+            <div class="fact">
+              <div class="k">Con cuánta anticipación</div>
+              <div class="v">2 horas antes de la salida programada</div>
+              <div class="s">Para que la estimación sea útil antes del embarque.</div>
+            </div>
+            <div class="fact">
+              <div class="k">De qué aprende</div>
+              <div class="v">Millones de vuelos + historial del clima</div>
+              <div class="s">Usando datos públicos de desempeño de vuelos y clima.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <section class="panel" style="margin: 1.25rem 0">
+          <div class="panel-inner">
+            <h2>Por qué los retrasos son difíciles (y por qué sirve una alerta temprana)</h2>
+            <p>
+              Los retrasos pueden tener muchas causas a la vez: clima, congestión en aeropuertos, vuelos previos que
+              llegan tarde u otras limitaciones operativas. Una vez que comienzan, se pueden propagar durante el día.
+            </p>
+            <div class="grid-2">
+              <div>
+                <h3>Quién se beneficia</h3>
+                <ul>
+                  <li><strong>Aerolíneas/aeropuertos:</strong> planificar puertas, tripulaciones y comunicación antes.</li>
+                  <li><strong>Viajeros:</strong> ajustar expectativas y preparar planes alternativos con tiempo.</li>
+                  <li><strong>Operaciones:</strong> priorizar la atención en los vuelos con mayor riesgo.</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Qué significa “2 horas antes”</h3>
+                <p class="muted">
+                  La estimación se hace solo con información disponible antes del vuelo—similar a consultar tráfico y
+                  pronóstico antes de salir hacia el aeropuerto.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin: 1.25rem 0">
+          <div class="panel-inner">
+            <h2>Qué usa para estimar (en palabras simples)</h2>
+            <p class="muted">
+              Flight Sentry no “adivina el futuro”. Aprende patrones del pasado y los aplica a vuelos próximos.
+            </p>
+            <div class="grid-2">
+              <div>
+                <h3>Ejemplos de señales</h3>
+                <ul>
+                  <li>Qué tan atrasados han estado los vuelos recientemente en el aeropuerto de origen</li>
+                  <li>Patrones por hora / día de la semana (horas pico, fines de semana)</li>
+                  <li>Condiciones del clima cerca del aeropuerto alrededor del corte (2 horas antes)</li>
+                  <li>Efecto dominó: si los aviones llegan tarde, salidas posteriores pueden atrasarse</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Cómo evita “hacer trampa”</h3>
+                <ul>
+                  <li>Excluye información que solo se conoce después de que el vuelo despega.</li>
+                  <li>Alinea el clima correctamente en el tiempo, en vez de usar observaciones posteriores.</li>
+                  <li>Evalúa en períodos posteriores para simular predicciones futuras.</li>
+                </ul>
+              </div>
+            </div>
+
+            <figure>
+              <img src="images/image_011_e73a9359.png" alt="Panel de gráficos que muestra cómo las condiciones meteorológicas se relacionan con la tasa de retrasos." />
+              <figcaption>
+                Ejemplo del proyecto: cómo patrones de clima se asocian con tasas de retraso. La idea principal:
+                incluso antes de la salida, el clima puede cambiar el riesgo de retraso.
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section class="panel" style="margin: 1.25rem 0">
+          <div class="panel-inner">
+            <h2>Qué aprendimos (a nivel general)</h2>
+            <ul>
+              <li>Los retrasos suelen ser “sistémicos”: se acumulan por congestión y efectos en cadena.</li>
+              <li>El clima importa, pero también los patrones operativos (hora del día y aeropuertos muy concurridos).</li>
+              <li>Para evaluar de forma justa, hay que probar en períodos posteriores y evitar campos definidos después del hecho.</li>
+            </ul>
+            <p class="muted">
+              En una de las mejores configuraciones, el sistema identificó una gran parte de los vuelos que terminaron
+              saliendo tarde en un conjunto de prueba de un año posterior (no es perfecto, pero sirve como alerta
+              temprana).
+            </p>
+          </div>
+        </section>
+
+        <section class="panel" style="margin: 1.25rem 0">
+          <div class="panel-inner">
+            <h2>Limitaciones (lo que esto no puede hacer)</h2>
+            <ul>
+              <li>Se basa en patrones históricos; eventos raros pueden romper esos patrones.</li>
+              <li>Es una estimación, no una garantía: las operaciones cambian minuto a minuto.</li>
+              <li>Convertirlo en producto requiere datos en vivo y monitoreo continuo.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="panel" style="margin: 1.25rem 0">
+          <div class="panel-inner">
+            <h2>¿Quieres más detalle técnico?</h2>
+            <p class="muted">
+              Si estás evaluando esto como portafolio técnico, la versión para reclutadores resalta decisiones de
+              ingeniería y modelado. El informe completo incluye todas las gráficas, tablas y experimentos.
+            </p>
+            <ul>
+              <li><a href="portfolio.html">Versión técnica (reclutadores)</a></li>
+              <li><a href="index.html">Informe completo</a></li>
+              <li><a href="context.md">Notas de traducción (cómo se relacionan las versiones)</a></li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>Creado como proyecto académico en equipo (Otoño 2025). Equipo: Anabel Basualdo, Carlos Schrupp, Arun Agarwal, Shikha Sharma, Nicole Zhang.</p>
+        <p class="muted">Sugerencia: publica esta carpeta en GitHub Pages / Netlify para compartir un enlace simple.</p>
+      </div>
+    </footer>
+  </body>
+</html>
+

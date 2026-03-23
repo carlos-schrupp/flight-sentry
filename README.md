@@ -6,6 +6,8 @@ Static website version of the Flight Sentry project notebook for team collaborat
 
 ```
 .
+├── public.html        # Public-friendly overview (English)
+├── public_es.html     # Public-friendly overview (Spanish)
 ├── portfolio.html     # Recruiter-friendly portfolio narrative (recommended entry point)
 ├── index.html         # Full technical report export (Databricks notebook → HTML)
 ├── context.md         # Translation notes (index.html → portfolio.html)
@@ -17,16 +19,19 @@ Static website version of the Flight Sentry project notebook for team collaborat
 
 ### Viewing Locally
 
-Open `portfolio.html` (recommended) or `index.html` (full report) in any web browser:
+Open one of the HTML files in any web browser:
+- `public.html` / `public_es.html` for a non-technical overview
+- `portfolio.html` for a recruiter/technical portfolio summary
+- `index.html` for the full report export
 
 ```bash
 # On Linux/Mac
-open portfolio.html
+open public.html
 # or
-xdg-open portfolio.html
+xdg-open public.html
 
 # On Windows
-start portfolio.html
+start public.html
 ```
 
 ## Team Collaboration
